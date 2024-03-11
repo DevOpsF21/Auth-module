@@ -2,11 +2,7 @@ pipeline {
     agent any
     
     stages {
-        stage('Checkout') {
-            steps {
-                git 'git@github.com:DevOpsF21/Auth-module.git'
-            }
-        }
+        
         stage('Install Dependencies') {
             steps {
                 sh 'npm install'
