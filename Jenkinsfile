@@ -2,12 +2,7 @@ pipeline {
     agent any
     
     stages {
-        stage('Install Dependencies') {
-            steps {
-                tool name: 'NodeJS 21', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
-                sh 'npm install'
-            }
-        }
+     
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t auth-module .'
