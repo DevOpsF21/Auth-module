@@ -10,8 +10,8 @@ pipeline {
         }
         stage('Push Docker Image to Local Registry') {
             steps {
-                sh 'docker tag auth-module localhost:3000/auth-module'
-                sh 'docker push localhost:3000/auth-module'
+                sh '/usr/local/bin/docker tag auth-module localhost:3000/auth-module'
+                sh '/usr/local/bin/docker push localhost:3000/auth-module'
             }
         }
         stage('Run Docker Container') {
