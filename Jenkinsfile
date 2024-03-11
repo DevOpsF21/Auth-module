@@ -3,9 +3,9 @@ pipeline {
     
     stages {
      
-        stage('Build Docker Image') {
+         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t auth-module .'
+                sh '/usr/local/bin/docker build -t auth-module .'
             }
         }
         stage('Push Docker Image to Local Registry') {
