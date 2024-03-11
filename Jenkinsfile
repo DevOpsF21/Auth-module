@@ -2,7 +2,10 @@ pipeline {
     agent any
     
     stages {
-        
+        tools {
+       
+            nodejs 'NodeJS 21'
+            }
         stage('Install Dependencies') {
             steps {
                 sh 'npm install'
