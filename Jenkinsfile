@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    // No agent directive needed, Jenkins will run the pipeline on the master node (local machine)
     
     stages {
         stage('Install Dependencies') {
