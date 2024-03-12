@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment # The name of the Kubernetes Deployment to be created in the Kubernetes cluster
+  labels:
+    app: auth-module
+spec:
+  replicas: 2 # The number of pods to be created in the Kubernetes cluster for the Groovy API container
+  selector:
+    matchLabels:
+      app: auth-module
+  template:
+    metadata:
+      labels:
+        app: auth-module
+    spec:
+      containers:
+      - name: auth-module # The name of the Groovy API container
+        # The Docker image for building the Groovy API container
+        image: localhost:3000/auth-module:latest 
+        ports:
+        - containerPort: 3000 # The port for the Groovy API container
