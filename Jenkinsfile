@@ -6,16 +6,14 @@ pipeline {
         sh '/usr/local/bin/docker build -t auth-module .'
       }
     }
-    stage('Run Docker Container') {
+    stage('Run Docker Container Locally') {
       steps {
         sh '/usr/local/bin/docker run -d --name auth-container -p 8080:8080 auth-module:latest'
       }
     }
-    stage('Deploying Dockerized Application to Kubernetes') {
+    stage('Deploying to Minikube') {
       steps {
-        script {
-          kubernetesDeploy(configs: ["deployment.yaml", "service.yaml"])
-        }
+        sh 'kubectl apply -f deployment.yaml -f service.yaml'
       }
     }
   }
