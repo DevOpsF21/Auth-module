@@ -8,7 +8,7 @@ pipeline {
     }
     stage('Run Docker Container Locally') {
       steps {
-        sh '/usr/local/bin/docker run -d --name auth-container -p 8080:8080 auth-module:latest'
+        sh '/usr/local/bin/docker run -d --name auth-container -p 3000:3000 auth-module:latest'
       }
     }
     stage('Deploying to Minikube') {
