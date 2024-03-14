@@ -2,16 +2,18 @@ pipeline {
   agent any
 
   environment {
-    // Assuming "/path/to/docker/bin" is where Docker is installed. Update this path as necessary.
-    DOCKER_PATH = "/usr/local/bin"
+    // Define the Docker image you want to pull and use
+    DOCKER_IMAGE = "auth-module:latest"
+    // Define the paths to your Minikube and Docker binaries if necessary
     MINIKUBE_PATH = "/opt/homebrew/bin"
+    DOCKER_PATH = "/usr/local/bin"
   }
 
   stages {
     stage('Preparation') {
       steps {
         script {
-          // This is a better way to dynamically adjust the PATH for all the following stages.
+          // Adjust the PATH to ensure Docker and Minikube commands are accessible
           env.PATH = "${env.DOCKER_PATH}:${env.MINIKUBE_PATH}:${env.PATH}"
         }
       }
@@ -19,7 +21,7 @@ pipeline {
 
     stage('Building Docker Image') {
       steps {
-        sh 'docker build -t auth-module:latest .'
+        sh 'docker build -t ${DOCKER_IMAGE} .'
       }
     }
 
@@ -28,25 +30,21 @@ pipeline {
         sh '''
           docker stop auth-container || true
           docker rm auth-container || true
-          docker run -d --name auth-container -p 3000:3000 auth-module:latest
+          docker run -d --name auth-container -p 3000:3000 ${DOCKER_IMAGE}
         '''
       }
     }
 
-    stage('Deploying to Minikube') {
+    stage('Pulling and Deploying to Minikube') {
       steps {
         sh '''
-          # Debugging: Print the current PATH to ensure our adjustments are effective
-          echo "Current PATH: $PATH"
-          
-          # Verify Docker is correctly installed and accessible
-          which docker || echo "Docker not found"
-          
           # Configure shell to use Minikube's Docker daemon
-          eval $(minikube -p minikube docker-env -u)
+          eval $(minikube -p minikube docker-env)
           
-          # Insert your deployment commands here
-          # For example, applying Kubernetes configurations
+          # Pull the Docker image into Minikube's Docker environment
+          docker pull ${DOCKER_IMAGE}
+          
+          # Apply Kubernetes configurations
           kubectl apply -f deployment.yaml -f service.yaml
         '''
       }
