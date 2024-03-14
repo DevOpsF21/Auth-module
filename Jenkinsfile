@@ -1,5 +1,12 @@
 pipeline {
   agent any
+
+  stage('Preparation') {
+  steps {
+    sh 'export PATH=$PATH:/path/to/docker'
+  }
+}
+
   stages {
     stage('Building Docker Image') {
       steps {
@@ -15,20 +22,21 @@ pipeline {
         '''
       }
     }
-    stage('Deploying to Minikube') {
-      steps {
-        sh '''
-        # Configuring shell to use Minikube's Docker daemon
-        eval $(/opt/homebrew/bin/minikube -p minikube docker-env)
-        # Now, any Docker commands will interact with Minikube's Docker daemon
+   stage('Deploying to Minikube') {
+  steps {
+    sh 'echo $PATH' // Print current PATH for debugging
+    sh '/usr/bin/which docker || echo "Docker not found"' // Check if Docker can be found
+    sh '''
+    # Adjust PATH if necessary
+    export PATH=$PATH:/path/to/docker/bin
+    
+    # Attempt to set Minikube's Docker environment
+    eval $('/opt/homebrew/bin/minikube' -p minikube docker-env)
+    
+    # Your deployment commands here
+    '''
+  }
+}
 
-        # Deploying using kubectl within the same shell to ensure Docker env vars are still set
-        /usr/local/bin/kubectl apply -f deployment.yaml -f service.yaml
-
-        # Optionally, if you want to revert to using the system's Docker daemon within this block for subsequent commands
-        # eval $(/usr/local/bin/minikube -p minikube docker-env -u)
-        '''
-      }
-    }
   }
 }
