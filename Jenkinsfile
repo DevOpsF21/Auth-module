@@ -43,7 +43,7 @@ pipeline {
           which docker || echo "Docker not found"
           
           # Configure shell to use Minikube's Docker daemon
-          eval $(minikube -p minikube docker-env)
+          eval $(minikube -p minikube docker-env -u)
           
           # Insert your deployment commands here
           # For example, applying Kubernetes configurations
