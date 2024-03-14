@@ -17,7 +17,17 @@ pipeline {
     }
     stage('Deploying to Minikube') {
       steps {
-        sh '/usr/local/bin/kubectl apply -f deployment.yaml -f service.yaml'
+        sh '''
+        # Configuring shell to use Minikube's Docker daemon
+        /tmp/eval $(/opt/homebrew/bin/minikube -p minikube docker-env)
+        # Now, any Docker commands will interact with Minikube's Docker daemon
+
+        # Deploying using kubectl within the same shell to ensure Docker env vars are still set
+        /usr/local/bin/kubectl apply -f deployment.yaml -f service.yaml
+
+        # Optionally, if you want to revert to using the system's Docker daemon within this block for subsequent commands
+        # eval $(/usr/local/bin/minikube -p minikube docker-env -u)
+        '''
       }
     }
   }
