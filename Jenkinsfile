@@ -19,7 +19,7 @@ pipeline {
       steps {
         sh '''
         # Configuring shell to use Minikube's Docker daemon
-        /tmp/eval $(/opt/homebrew/bin/minikube -p minikube docker-env)
+        eval $(/opt/homebrew/bin/minikube -p minikube docker-env)
         # Now, any Docker commands will interact with Minikube's Docker daemon
 
         # Deploying using kubectl within the same shell to ensure Docker env vars are still set
