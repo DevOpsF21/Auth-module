@@ -2,9 +2,9 @@ pipeline {
   agent any
 
   environment {
-    // Define the Docker image you want to pull and use
+    // Define the Docker image you want to transfer
     DOCKER_IMAGE = "auth-module:latest"
-    // Define the paths to your Minikube and Docker binaries if necessary
+    // Paths to your Minikube and Docker binaries if necessary
     MINIKUBE_PATH = "/opt/homebrew/bin"
     DOCKER_PATH = "/usr/local/bin"
   }
@@ -25,26 +25,28 @@ pipeline {
       }
     }
 
-    stage('Run Docker Container Locally') {
+    stage('Transfer Image to Minikube') {
       steps {
         sh '''
-          docker stop auth-container || true
-          docker rm auth-container || true
-          docker run -d --name auth-container -p 3000:3000 ${DOCKER_IMAGE}
+          # Save the Docker image to a tar file
+          docker save ${DOCKER_IMAGE} > image.tar
+          
+          # Set shell to use Minikube's Docker environment
+          eval $(minikube -p minikube docker-env)
+          
+          # Load the image from the tar file into Minikube's Docker environment
+          docker load < image.tar
+          
+          # Clean up the tar file
+          rm image.tar
         '''
       }
     }
 
-    stage('Pulling and Deploying to Minikube') {
+    stage('Deploying to Minikube') {
       steps {
         sh '''
-          # Configure shell to use Minikube's Docker daemon
-          eval $(minikube -p minikube docker-env)
-          
-          # Pull the Docker image into Minikube's Docker environment
-          docker pull ${DOCKER_IMAGE}
-          
-          # Apply Kubernetes configurations
+          # Deployment commands don't need to change, since the image is now available in Minikube
           kubectl apply -f deployment.yaml -f service.yaml
         '''
       }
