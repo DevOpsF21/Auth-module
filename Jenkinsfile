@@ -3,13 +3,14 @@ pipeline {
   environment {
     DOCKER_IMAGE = 'auth-module:latest'
     MINIKUBE_PROFILE = 'minikube'
+    PATH = "$PATH:/opt/homebrew/bin/minikube"
   }
   stages {
     stage('Building Docker Image') {
       steps {
         script {
           // Build the Docker image
-          sh '/usr/local/bin/docker build -t ${DOCKER_IMAGE} .'
+          sh 'docker build -t ${DOCKER_IMAGE} .'
         }
       }
     }
@@ -17,7 +18,7 @@ pipeline {
       steps {
         script {
           // Load the Docker image into Minikube
-          sh "/opt/homebrew/bin/minikube -p ${MINIKUBE_PROFILE} image load ${DOCKER_IMAGE}"
+          sh "minikube -p ${MINIKUBE_PROFILE} image load ${DOCKER_IMAGE}"
         }
       }
     }
@@ -25,7 +26,7 @@ pipeline {
       steps {
         script {
           // Apply the Kubernetes deployment and service
-          sh '/usr/local/bin/kubectl apply -f deployment.yaml -f service.yaml'
+          sh 'kubectl apply -f deployment.yaml -f service.yaml'
         }
       }
     }
