@@ -32,7 +32,7 @@ pipeline {
           docker save ${DOCKER_IMAGE} > image.tar
           
           # Set shell to use Minikube's Docker environment
-          eval $(minikube -p minikube docker-env)
+          #eval $(minikube -p minikube docker-env)
           
           # Load the image from the tar file into Minikube's Docker environment
           docker load < image.tar
