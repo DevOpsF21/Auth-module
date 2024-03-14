@@ -3,7 +3,7 @@ pipeline {
   stages {
     stage('Building Docker Image') {
       steps {
-        sh '/usr/share/zsh/5.8.1/help/eval $(minikube docker-env)'
+        sh '/tmp/eval $(minikube docker-env)'
         sh '/usr/local/bin/docker build -t auth-module:latest .'
       }
     }
