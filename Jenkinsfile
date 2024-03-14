@@ -1,42 +1,55 @@
 pipeline {
   agent any
 
-  stage('Preparation') {
-  steps {
-    sh 'export PATH=$PATH:/path/to/docker'
+  environment {
+    // Assuming "/path/to/docker/bin" is where Docker is installed. Update this path as necessary.
+    DOCKER_PATH = "/usr/local/bin"
+    MINIKUBE_PATH = "/opt/homebrew/bin"
   }
-}
 
   stages {
-    stage('Building Docker Image') {
+    stage('Preparation') {
       steps {
-        sh '/usr/local/bin/docker build -t auth-module:latest .'
+        script {
+          // This is a better way to dynamically adjust the PATH for all the following stages.
+          env.PATH = "${env.DOCKER_PATH}:${env.MINIKUBE_PATH}:${env.PATH}"
+        }
       }
     }
+
+    stage('Building Docker Image') {
+      steps {
+        sh 'docker build -t auth-module:latest .'
+      }
+    }
+
     stage('Run Docker Container Locally') {
       steps {
         sh '''
-       /usr/local/bin/docker stop auth-container
-       /usr/local/bin/docker rm auth-container
-        /usr/local/bin/docker run -d --name auth-container -p 3000:3000 auth-module:latest
+          docker stop auth-container || true
+          docker rm auth-container || true
+          docker run -d --name auth-container -p 3000:3000 auth-module:latest
         '''
       }
     }
-   stage('Deploying to Minikube') {
-  steps {
-    sh 'echo $PATH' // Print current PATH for debugging
-    sh '/usr/bin/which docker || echo "Docker not found"' // Check if Docker can be found
-    sh '''
-    # Adjust PATH if necessary
-    export PATH=$PATH:/path/to/docker/bin
-    
-    # Attempt to set Minikube's Docker environment
-    eval $('/opt/homebrew/bin/minikube' -p minikube docker-env)
-    
-    # Your deployment commands here
-    '''
-  }
-}
 
+    stage('Deploying to Minikube') {
+      steps {
+        sh '''
+          # Debugging: Print the current PATH to ensure our adjustments are effective
+          echo "Current PATH: $PATH"
+          
+          # Verify Docker is correctly installed and accessible
+          which docker || echo "Docker not found"
+          
+          # Configure shell to use Minikube's Docker daemon
+          eval $(minikube -p minikube docker-env)
+          
+          # Insert your deployment commands here
+          # For example, applying Kubernetes configurations
+          kubectl apply -f deployment.yaml -f service.yaml
+        '''
+      }
+    }
   }
 }
