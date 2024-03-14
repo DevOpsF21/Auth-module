@@ -17,7 +17,7 @@ pipeline {
       steps {
         script {
           // Load the Docker image into Minikube
-          sh "minikube -p ${MINIKUBE_PROFILE} image load ${DOCKER_IMAGE}"
+          sh "/usr/local/bin/minikube -p ${MINIKUBE_PROFILE} image load ${DOCKER_IMAGE}"
         }
       }
     }
