@@ -31,21 +31,23 @@ pipeline {
             }
         }
 
-        stage('Run Docker Container Locally') {
-            steps {
-                script {
-                    // Check if the container is already running
-                    def isRunning = sh(script: "docker ps -q -f name=^${CONTAINER_NAME}$", returnStdout: true).trim()
-                    if (isRunning) {
-                        // If the container is running, stop and remove it
-                        sh "docker stop ${CONTAINER_NAME}"
-                        sh "docker rm ${CONTAINER_NAME}"
-                    }
-                    // Run the new container with the updated image
-                    sh "docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_FULL_NAME}"
-                }
+       stage('Run Docker Container Locally') {
+    steps {
+        script {
+            // Check if the container is already running using Groovy string concatenation
+            def isRunningCmd = 'docker ps -q -f name=' + CONTAINER_NAME
+            def isRunning = sh(script: isRunningCmd, returnStdout: true).trim()
+            if (isRunning) {
+                // If the container is running, stop and remove it
+                sh "docker stop ${CONTAINER_NAME}"
+                sh "docker rm ${CONTAINER_NAME}"
             }
+            // Run the new container with the updated image
+            sh "docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_FULL_NAME}"
         }
+    }
+}
+
 
         stage('Transfer Image to Minikube') {
             steps {
