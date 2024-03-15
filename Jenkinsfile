@@ -28,16 +28,19 @@ pipeline {
         sh 'docker build -t ${DOCKER_IMAGE} .'
       }
     }
+
     stage('Run Docker Container Locally') {
       steps {
-         sh '''
-           docker stop auth-container || true
-           docker rm auth-container || true
-           docker run -d --name auth-container -p 3000:3000 auth-module:latest
-           docker run -d --name auth-container -p 3000:3000 ${DOCKER_IMAGE}
-         '''
-       }
-     }
+        sh '''
+          # Stop and remove the existing container if it exists
+          docker stop auth-container || true
+          docker rm auth-container || true
+          
+          # Run a new container from the built image
+          docker run -d --name auth-container -p 3000:3000 ${DOCKER_IMAGE}
+        '''
+      }
+    }
 
     stage('Transfer Image to Minikube') {
       steps {
@@ -58,7 +61,7 @@ pipeline {
       steps {
         sh '''
           # Update the deployment to use the new Docker image
-          kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${DOCKER_IMAGE}
+          kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${DOCKER_IMAGE} --record
           
           # Trigger a rollout restart of the deployment to refresh the pods
           kubectl rollout restart deployment/${DEPLOYMENT_NAME}
