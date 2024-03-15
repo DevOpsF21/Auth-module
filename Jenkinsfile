@@ -37,7 +37,7 @@ pipeline {
             // Define the command to check if the container is already running
             def checkCommand = "docker ps -q -f name=^${CONTAINER_NAME}"
             // Execute the command and trim any whitespace from the result
-            def isRunning = sh(script: "docker ps -q -f name=^auth-module$", returnStdout: true).trim()
+            def isRunning = sh(script: "docker ps -q -f name="auth-module", returnStdout: true).trim()
             if (isRunning) {
                 // If the container is running, stop and remove it
                 sh "docker stop ${CONTAINER_NAME}"
