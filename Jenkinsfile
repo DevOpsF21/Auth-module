@@ -2,8 +2,12 @@ pipeline {
   agent any
 
   environment {
-    // Define the Docker image you want to transfer
+    // Define the Docker image you want to transfer and use
     DOCKER_IMAGE = "auth-module:latest"
+    // Use the deployment name from your Kubernetes deployment manifest
+    DEPLOYMENT_NAME = "auth-module-deployment"
+    // Use the container name from your Kubernetes deployment manifest
+    CONTAINER_NAME = "auth-module"
     // Paths to your Minikube and Docker binaries if necessary
     MINIKUBE_PATH = "/opt/homebrew/bin"
     DOCKER_PATH = "/usr/local/bin"
@@ -24,6 +28,16 @@ pipeline {
         sh 'docker build -t ${DOCKER_IMAGE} .'
       }
     }
+    stage('Run Docker Container Locally') {
+      steps {
+         sh '''
+           docker stop auth-container || true
+           docker rm auth-container || true
+           docker run -d --name auth-container -p 3000:3000 auth-module:latest
+           docker run -d --name auth-container -p 3000:3000 ${DOCKER_IMAGE}
+         '''
+       }
+     }
 
     stage('Transfer Image to Minikube') {
       steps {
@@ -31,13 +45,10 @@ pipeline {
           # Save the Docker image to a tar file
           docker save ${DOCKER_IMAGE} > image.tar
           
-          # Set shell to use Minikube's Docker environment
-          #eval $(minikube -p minikube docker-env)
+          # Load the image into Minikube's Docker environment
+          minikube -p minikube image load image.tar
           
-          # Load the image from the tar file into Minikube's Docker environment
-          docker load < image.tar
-          
-          # Clean up the tar file
+          # Clean up the tar file after loading
           rm image.tar
         '''
       }
@@ -46,8 +57,11 @@ pipeline {
     stage('Deploying to Minikube') {
       steps {
         sh '''
-          # Deployment commands don't need to change, since the image is now available in Minikube
-          kubectl apply -f deployment.yaml -f service.yaml
+          # Update the deployment to use the new Docker image
+          kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${DOCKER_IMAGE}
+          
+          # Trigger a rollout restart of the deployment to refresh the pods
+          kubectl rollout restart deployment/${DEPLOYMENT_NAME}
         '''
       }
     }
