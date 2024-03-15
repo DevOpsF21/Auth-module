@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        // Define the Docker image you want to transfer and use, with a version tag placeholder
+        // Define the Docker image you want to transfer and use, dynamically setting the version tag with each build
         DOCKER_IMAGE = "auth-module"
-        DOCKER_TAG = "v1.0.0" // Consider dynamically setting this for each build
+        DOCKER_TAG = "v1.0.${BUILD_NUMBER}" // Dynamically includes Jenkins build number
         IMAGE_FULL_NAME = "${DOCKER_IMAGE}:${DOCKER_TAG}"
         // Use the deployment name from your Kubernetes deployment manifest
         DEPLOYMENT_NAME = "auth-module-deployment"
@@ -31,18 +31,22 @@ pipeline {
             }
         }
 
-       stage('Run Docker Container Locally') {
+        stage('Run Docker Container Locally') {
     steps {
         script {
-            // Check if the container is already running using Groovy string concatenation
-            def isRunningCmd = 'docker ps -q -f name=' + CONTAINER_NAME
-            def isRunning = sh(script: isRunningCmd, returnStdout: true).trim()
-            if (isRunning) {
+            // Check if the container is already running
+            def runningContainers = sh(script: "docker ps --filter 'name=^${CONTAINER_NAME}$' --format '{{.Names}}'", returnStdout: true).trim()
+            if (runningContainers) {
                 // If the container is running, stop and remove it
+                echo "Stopping and removing existing container: ${CONTAINER_NAME}"
                 sh "docker stop ${CONTAINER_NAME}"
                 sh "docker rm ${CONTAINER_NAME}"
+            } else {
+                echo "No existing container to remove. Proceeding to run a new one."
             }
-            // Run the new container with the updated image
+
+            // Now, run the new container with the updated image
+            echo "Running new container: ${CONTAINER_NAME}"
             sh "docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_FULL_NAME}"
         }
     }
@@ -82,7 +86,7 @@ pipeline {
                 script {
                     // Check the rollout status to ensure it's successful
                     sh "kubectl rollout status deployment/${DEPLOYMENT_NAME}"
-                    // Optionally, list the running pods
+                    // Optionally, list the running pods to verify the update
                     sh "kubectl get pods --selector=app=${CONTAINER_NAME}"
                 }
             }
