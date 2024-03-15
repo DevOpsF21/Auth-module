@@ -4,7 +4,7 @@ pipeline {
     environment {
         // Define the Docker image you want to transfer and use, with a version tag placeholder
         DOCKER_IMAGE = "auth-module"
-        DOCKER_TAG = "v1.0.0" // Placeholder for your versioning scheme
+        DOCKER_TAG = "v1.0.0" // Consider dynamically setting this for each build
         IMAGE_FULL_NAME = "${DOCKER_IMAGE}:${DOCKER_TAG}"
         // Use the deployment name from your Kubernetes deployment manifest
         DEPLOYMENT_NAME = "auth-module-deployment"
@@ -33,14 +33,17 @@ pipeline {
 
         stage('Run Docker Container Locally') {
             steps {
-                sh '''
-                    # Stop and remove the existing container if it exists
-                    docker stop auth-container || true
-                    docker rm auth-container || true
-
-                    # Run a new container from the built image
-                    docker run -d --name auth-container -p 3000:3000 ${IMAGE_FULL_NAME}
-                '''
+                script {
+                    // Check if the container is already running
+                    def isRunning = sh(script: "docker ps -q -f name=^auth-container$", returnStdout: true).trim()
+                    if (isRunning) {
+                        // Stop and remove the container if it is running
+                        sh "docker stop auth-container"
+                        sh "docker rm auth-container"
+                    }
+                    // Run the new container
+                    sh "docker run -d --name auth-container -p 3000:3000 ${IMAGE_FULL_NAME}"
+                }
             }
         }
 
@@ -65,12 +68,21 @@ pipeline {
                     # Ensure kubectl is using Minikube's Docker environment
                     eval $(minikube -p minikube docker-env)
 
-                    # Update the deployment to use the new Docker image
-                    kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_FULL_NAME}
-
-                    # Trigger a rollout restart of the deployment to refresh the pods
+                    # Update the deployment to use the new Docker image and restart the pods
+                    kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_FULL_NAME} --record
                     kubectl rollout restart deployment/${DEPLOYMENT_NAME}
                 '''
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    // Check the rollout status to ensure it's successful
+                    sh "kubectl rollout status deployment/${DEPLOYMENT_NAME}"
+                    // Optionally, list the running pods
+                    sh "kubectl get pods --selector=app=${CONTAINER_NAME}"
+                }
             }
         }
     }
