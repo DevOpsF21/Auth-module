@@ -34,8 +34,9 @@ pipeline {
       stage('Run Docker Container Locally') {
     steps {
         script {
-            // Check if the container is already running
-            def isRunning = sh(script: "docker ps -q -f name=^$${CONTAINER_NAME}$", returnStdout: true).trim()
+            // Define the command as a variable
+            def checkCommand = "docker ps -q -f name=^${CONTAINER_NAME}$"
+            def isRunning = sh(script: checkCommand, returnStdout: true).trim()
             if (isRunning) {
                 // Stop and remove the container if it is running
                 sh "docker stop ${CONTAINER_NAME}"
@@ -45,6 +46,8 @@ pipeline {
             sh "docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_FULL_NAME}"
         }
     }
+}
+
 }
 
 }
