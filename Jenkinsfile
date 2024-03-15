@@ -52,12 +52,6 @@ pipeline {
             }
         }
 
-
-}
-
-
-
-
         stage('Transfer Image to Minikube') {
             steps {
                 sh '''
@@ -96,6 +90,5 @@ pipeline {
                 }
             }
         }
-    
+    }
 }
-
