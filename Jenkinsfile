@@ -31,21 +31,22 @@ pipeline {
             }
         }
 
-        stage('Run Docker Container Locally') {
-            steps {
-                script {
-                    // Check if the container is already running
-                    def isRunning = sh(script: "docker ps -q -f name=^auth-container$", returnStdout: true).trim()
-                    if (isRunning) {
-                        // Stop and remove the container if it is running
-                        sh "docker stop auth-container"
-                        sh "docker rm auth-container"
-                    }
-                    // Run the new container
-                    sh "docker run -d --name auth-container -p 3000:3000 ${IMAGE_FULL_NAME}"
-                }
+       stage('Run Docker Container Locally') {
+    steps {
+        script {
+            // Check if the container is already running
+            def isRunning = sh(script: "docker ps -q -f name=^${CONTAINER_NAME}$", returnStdout: true).trim()
+            if (isRunning) {
+                // Stop and remove the container if it is running
+                sh "docker stop ${CONTAINER_NAME}"
+                sh "docker rm ${CONTAINER_NAME}"
             }
+            // Run the new container
+            sh "docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_FULL_NAME}"
         }
+    }
+}
+
 
         stage('Transfer Image to Minikube') {
             steps {
