@@ -35,8 +35,8 @@ pipeline {
     steps {
         script {
             // Check if the container is already running
-            def runningContainers = sh(script: "docker ps --filter 'name=^\\${CONTAINER_NAME}$' --format '{{.Names}}'", returnStdout: true).trim()
-            if (runningContainers) {
+            def runningContainers = sh(script: "docker ps --filter 'name=${CONTAINER_NAME}' --format '{{.Names}}'", returnStdout: true).trim()
+            if (runningContainers == CONTAINER_NAME) {
                 // If the container is running, stop and remove it
                 echo "Stopping and removing existing container: ${CONTAINER_NAME}"
                 sh "docker stop ${CONTAINER_NAME}"
@@ -50,6 +50,8 @@ pipeline {
             sh "docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_FULL_NAME}"
         }
     }
+}
+
 }
 
 }
