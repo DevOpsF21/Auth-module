@@ -31,21 +31,24 @@ pipeline {
             }
         }
 
-      stage('Run Docker Container Locally') {
+    stage('Run Docker Container Locally') {
     steps {
         script {
-            // Define the command as a variable
+            // Define the command to check if the container is already running
             def checkCommand = "docker ps -q -f name=^${CONTAINER_NAME}$"
-            def isRunning = sh(script: "docker ps -q -f name=^\\${CONTAINER_NAME}$", returnStdout: true).trim()
+            // Execute the command and trim any whitespace from the result
+            def isRunning = sh(script: checkCommand, returnStdout: true).trim()
             if (isRunning) {
-                // Stop and remove the container if it is running
+                // If the container is running, stop and remove it
                 sh "docker stop ${CONTAINER_NAME}"
                 sh "docker rm ${CONTAINER_NAME}"
             }
-            // Run the new container
+            // Run the new container with the updated image
             sh "docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_FULL_NAME}"
         }
     }
+}
+
 }
 
 }
