@@ -67,7 +67,7 @@ pipeline {
             kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${DOCKER_IMAGE}
             
             # Trigger a rollout restart of the deployment to refresh the pods
-            kubectl rollout restart deployment/${DEPLOYMENT_NAME}
+           # kubectl rollout restart deployment/${DEPLOYMENT_NAME}
         '''
     }
    }
