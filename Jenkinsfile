@@ -58,15 +58,18 @@ pipeline {
     }
 
     stage('Deploying to Minikube') {
-      steps {
+    steps {
         sh '''
-          # Update the deployment to use the new Docker image
-          kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${DOCKER_IMAGE} --record
-          
-          # Trigger a rollout restart of the deployment to refresh the pods
-          kubectl rollout restart deployment/${DEPLOYMENT_NAME}
+            # Ensure kubectl is using Minikube's Docker environment
+            eval $(minikube -p minikube docker-env)
+            
+            # Update the deployment to use the new Docker image
+            kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${DOCKER_IMAGE}
+            
+            # Trigger a rollout restart of the deployment to refresh the pods
+            kubectl rollout restart deployment/${DEPLOYMENT_NAME}
         '''
-      }
     }
+   }
   }
 }
