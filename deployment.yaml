@@ -14,7 +14,6 @@ spec:
     spec:
       containers:
       - name: auth-module
-        image: auth-module:latest
+        image: yourusername/auth-module:1.0.0  # Replace with your actual image
         ports:
         - containerPort: 3000
-        imagePullPolicy: Always
