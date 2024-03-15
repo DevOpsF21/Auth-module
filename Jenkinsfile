@@ -34,20 +34,12 @@ pipeline {
         stage('Run Docker Container Locally') {
             steps {
                 script {
-                    // Check if the container is already running
-                    def runningContainers = sh(script: "docker ps -aq --filter name=${CONTAINER_NAME}", returnStdout: true).trim()
-                    if (runningContainers) {
-                        // If the container is running, stop and remove it
-                        echo "Stopping and removing existing container: ${CONTAINER_NAME}"
-                        sh "docker stop ${CONTAINER_NAME}"
-                        sh "docker rm ${CONTAINER_NAME}"
-                    } else {
-                        echo "No existing container to remove. Proceeding to run a new one."
-                    }
+                    // Stop and remove the existing container if running
+                    sh "docker stop ${CONTAINER_NAME} || true"
+                    sh "docker rm ${CONTAINER_NAME} || true"
 
-                    // Now, run the new container with the updated image
-                    echo "Running new container: ${CONTAINER_NAME}"
-                    sh "docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_FULL_NAME}"
+                    // Now, run the new container with the updated image, using a random available port
+                    sh "docker run -d --name ${CONTAINER_NAME} -p 3000 ${IMAGE_FULL_NAME}"
                 }
             }
         }
