@@ -31,30 +31,21 @@ pipeline {
             }
         }
 
-    stage('Run Docker Container Locally') {
-    steps {
-        script {
-            // Define the command to check if the container is already running
-            def checkCommand = "docker ps -q -f name=^${CONTAINER_NAME}"
-            // Execute the command and trim any whitespace from the result
-            def isRunning = sh(script: "docker ps -q -f name="auth-module", returnStdout: true).trim()
-            if (isRunning) {
-                // If the container is running, stop and remove it
-                sh "docker stop ${CONTAINER_NAME}"
-                sh "docker rm ${CONTAINER_NAME}"
+        stage('Run Docker Container Locally') {
+            steps {
+                script {
+                    // Check if the container is already running
+                    def isRunning = sh(script: "docker ps -q -f name=^${CONTAINER_NAME}$", returnStdout: true).trim()
+                    if (isRunning) {
+                        // If the container is running, stop and remove it
+                        sh "docker stop ${CONTAINER_NAME}"
+                        sh "docker rm ${CONTAINER_NAME}"
+                    }
+                    // Run the new container with the updated image
+                    sh "docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_FULL_NAME}"
+                }
             }
-            // Run the new container with the updated image
-            sh "docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_FULL_NAME}"
         }
-    }
-}
-
-}
-
-}
-
-}
-
 
         stage('Transfer Image to Minikube') {
             steps {
@@ -78,7 +69,7 @@ pipeline {
                     eval $(minikube -p minikube docker-env)
 
                     # Update the deployment to use the new Docker image and restart the pods
-                    kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_FULL_NAME} --record
+                    kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_FULL_NAME}
                     kubectl rollout restart deployment/${DEPLOYMENT_NAME}
                 '''
             }
