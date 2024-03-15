@@ -36,7 +36,7 @@ pipeline {
         script {
             // Define the command as a variable
             def checkCommand = "docker ps -q -f name=^${CONTAINER_NAME}$"
-            def isRunning = sh(script: checkCommand, returnStdout: true).trim()
+            def isRunning = sh(script: "docker ps -q -f name=^\\${CONTAINER_NAME}$", returnStdout: true).trim()
             if (isRunning) {
                 // Stop and remove the container if it is running
                 sh "docker stop ${CONTAINER_NAME}"
