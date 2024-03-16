@@ -1,11 +1,98 @@
 {
 	"info": {
 		"_postman_id": "acca53ad-edb9-42d2-a997-61154c9c6d51",
-		"name": "Auth collection",
+		"name": "Authcollection",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "32784933"
 	},
 	"item": [
+		{
+			"name": "user registration ",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{  \"username\": \"khu3\",\n   \"email\": \"khu3@gmail.com\",\n   \"password\": \"password123\",\n   \"roles\": [\"admin\"]}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/v1/user",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"v1",
+						"user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login with Invalid Credentials",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{  \"username\": \"khu\",\n    \"password\": \"wrongpassword123\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/v1/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"v1",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login with a Non-existent Username",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{  \"username\": \"wronguserkhu\",\n    \"password\": \"password123\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/v1/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"v1",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
 		{
 			"name": "login",
 			"request": {
@@ -112,35 +199,6 @@
 			"response": []
 		},
 		{
-			"name": "user registration ",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{  \"username\": \"khu3\",\n   \"email\": \"khu3@gmail.com\",\n   \"password\": \"password123\",\n   \"roles\": [\"admin\"]}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:3000/v1/user",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "3000",
-					"path": [
-						"v1",
-						"user"
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "Register with an Existing Username or Email",
 			"request": {
 				"method": "POST",
@@ -197,65 +255,6 @@
 				}
 			},
 			"response": []
-		},
-		{
-			"name": "Login with Invalid Credentials",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{  \"username\": \"khu\",\n    \"password\": \"wrongpassword123\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:3000/v1/login",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "3000",
-					"path": [
-						"v1",
-						"login"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Login with a Non-existent Username",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{  \"username\": \"wronguserkhu\",\n    \"password\": \"password123\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:3000/v1/login",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "3000",
-					"path": [
-						"v1",
-						"login"
-					]
-				}
-			},
-			"response": []
 		}
 	]
 }
-
