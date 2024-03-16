@@ -34,13 +34,9 @@ pipeline {
         stage('Run Docker Container Locally') {
             steps {
                 script {
-                    // Check if port 3000 is already in use
-                    def portInUse = sh(script: "netstat -tuln | grep ':3000'", returnStatus: true)
-                    if (portInUse == 0) {
-                        // If port 3000 is in use, stop and remove the existing container
-                        sh "docker stop ${CONTAINER_NAME} || true"
-                        sh "docker rm ${CONTAINER_NAME} || true"
-                    }
+                    // Stop and remove the existing container if running
+                    sh "docker stop ${CONTAINER_NAME} || true"
+                    sh "docker rm ${CONTAINER_NAME} || true"
 
                     // Run the new container with the updated image on port 3000
                     sh "docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_FULL_NAME}"
@@ -65,24 +61,14 @@ pipeline {
 
         stage('Deploying to Minikube') {
             steps {
-                script {
-                    // Ensure kubectl is using Minikube's Docker environment
-                    sh 'eval $(minikube -p minikube docker-env)'
-                    
-                    // Check if the deployment exists
-                    def deploymentExists = sh(script: "kubectl get deployment ${DEPLOYMENT_NAME}", returnStatus: true) == 0
+                sh '''
+                    # Ensure kubectl is using Minikube's Docker environment
+                    eval $(minikube -p minikube docker-env)
 
-                    if (deploymentExists) {
-                        // Update the deployment to use the new Docker image
-                        sh "kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_FULL_NAME}"
-                        
-                        // Restart the pods
-                        sh "kubectl rollout restart deployment/${DEPLOYMENT_NAME}"
-                    } else {
-                        // Create the deployment using kubectl create
-                        sh "kubectl create -f path_to_your_deployment_yaml.yaml"
-                    }
-                }
+                    # Update the deployment to use the new Docker image and restart the pods
+                    kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_FULL_NAME}
+                    kubectl rollout restart deployment/${DEPLOYMENT_NAME}
+                '''
             }
         }
 
