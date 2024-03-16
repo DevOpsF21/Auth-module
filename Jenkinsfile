@@ -59,18 +59,29 @@ pipeline {
             }
         }
 
-        stage('Deploying to Minikube') {
-            steps {
-                sh '''
-                    # Ensure kubectl is using Minikube's Docker environment
-                    eval $(minikube -p minikube docker-env)
+       stage('Deploying to Minikube') {
+    steps {
+        script {
+            // Ensure kubectl is using Minikube's Docker environment
+            sh 'eval $(minikube -p minikube docker-env)'
+            
+            // Check if the deployment exists
+            def deploymentExists = sh(script: "kubectl get deployment ${DEPLOYMENT_NAME}", returnStatus: true) == 0
 
-                    # Update the deployment to use the new Docker image and restart the pods
-                    kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_FULL_NAME}
-                    kubectl rollout restart deployment/${DEPLOYMENT_NAME}
-                '''
+            if (deploymentExists) {
+                // Update the deployment to use the new Docker image
+                sh "kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_FULL_NAME}"
+                
+                // Restart the pods
+                sh "kubectl rollout restart deployment/${DEPLOYMENT_NAME}"
+            } else {
+                // Create the deployment using kubectl create
+                sh "kubectl create -f path_to_your_deployment_yaml.yaml"
             }
         }
+    }
+}
+
 
         stage('Verify Deployment') {
             steps {
