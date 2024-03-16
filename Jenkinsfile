@@ -13,6 +13,7 @@ pipeline {
         // Paths to your Minikube and Docker binaries if necessary
         MINIKUBE_PATH = "/opt/homebrew/bin"
         DOCKER_PATH = "/usr/local/bin"
+        POSTMAN_COLLECTION = "${WORKSPACE}/Auth collection.postman_collection.json"
     }
 
     stages {
@@ -79,6 +80,13 @@ pipeline {
                         sh "kubectl apply -f deployment.yaml -f service.yaml"
                     }
                 }
+            }
+        }
+
+         stage('Postman Testing') {
+            steps {
+                // Run Postman tests
+                sh "newman run ${POSTMAN_COLLECTION}"
             }
         }
 
