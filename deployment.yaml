@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: auth-module
-        image: ${DOCKER_IMAGE}:${DOCKER_TAG} # Dynamically sets the Docker image tag
+        image: auth-module:v1.0.${BUILD_NUMBER}  # Replace ${BUILD_NUMBER} with your actual build number
         ports:
         - containerPort: 3000
