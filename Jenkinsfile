@@ -33,7 +33,7 @@ pipeline {
             }
         }
 
-        stage('Run Docker Container Locally') {
+     /*  stage('Run Docker Container Locally') {
             steps {
                 script {
                     // Stop and remove the existing container if running
@@ -45,7 +45,7 @@ pipeline {
                 }
             }
         }
-
+*/
         stage('Transfer Image to Minikube') {
             steps {
                 sh '''
