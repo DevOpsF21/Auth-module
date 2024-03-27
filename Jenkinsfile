@@ -9,12 +9,11 @@ pipeline {
         DEPLOYMENT_NAME = "auth-module-deployment"
         // Use the container name from your Kubernetes deployment manifest
         CONTAINER_NAME = "auth-module"
-        // Paths to your Minikube and Docker binaries if necessary
+        // Paths to your Minikube and Docker binaries
         MINIKUBE_PATH = "/opt/homebrew/bin"
         DOCKER_PATH = "/usr/local/bin"
-        POSTMAN_COLLECTION = "${WORKSPACE}/Auth collection.postman_collection.json"
-        // Path to Postman collection file in your Git repository
-        POSTMAN_COLLECTION = "Authcollection.postman_collection.json"
+        // Path to Postman collection file in your Git repository (fixed redundancy)
+        POSTMAN_COLLECTION = "${WORKSPACE}/Authcollection.postman_collection.json"
     }
 
     stages {
@@ -44,14 +43,14 @@ pipeline {
         }
         stage('Transfer Image to Minikube') {
             steps {
-                sh '''
-                    # Save the Docker image to a tar file
-                    docker save ${IMAGE_FULL_NAME} > image.tar
-                    # Load the image into Minikube's Docker environment
-                    minikube -p minikube image load image.tar
-                    # Clean up the tar file after loading
-                    rm image.tar
-                '''
+                script {
+                    // Save the Docker image to a tar file
+                    sh "docker save ${IMAGE_FULL_NAME} > image.tar"
+                    // Load the image into Minikube's Docker environment
+                    sh "minikube -p minikube image load image.tar"
+                    // Clean up the tar file after loading
+                    sh "rm image.tar"
+                }
             }
         }
         stage('Deploying to Minikube') {
@@ -75,8 +74,6 @@ pipeline {
                 }
             }
         }
-
-         stage('Postman Testing') {
         stage('Postman Testing') {
             steps {
                 // Run Postman tests
