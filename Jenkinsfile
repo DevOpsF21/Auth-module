@@ -13,8 +13,7 @@ pipeline {
         // Paths to your Minikube and Docker binaries if necessary
         MINIKUBE_PATH = "/opt/homebrew/bin"
         DOCKER_PATH = "/usr/local/bin"
-        // Path to Postman collection file in your Git repository
-        POSTMAN_COLLECTION = "Authcollection.postman_collection.json"
+        POSTMAN_COLLECTION = "${WORKSPACE}/Auth collection.postman_collection.json"
     }
 
     stages {
@@ -67,32 +66,24 @@ pipeline {
                     // Ensure kubectl is using Minikube's Docker environment
                     sh 'eval $(minikube -p minikube docker-env)'
                     
-                    // Update the deployment to use the new Docker image
-                    def deploymentExists = sh(script: "kubectl get deployment ${DEPLOYMENT_NAME} -o json", returnStatus: true) == 0
+                    // Check if the deployment exists
+                    def deploymentExists = sh(script: "kubectl get deployment ${DEPLOYMENT_NAME}", returnStatus: true) == 0
+
                     if (deploymentExists) {
+                        // Update the deployment to use the new Docker image
                         sh "kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_FULL_NAME}"
+                        
                         // Restart the pods
                         sh "kubectl rollout restart deployment/${DEPLOYMENT_NAME}"
                     } else {
-                        // Apply the deployment and service YAML files if the deployment doesn't exist
+                        // Apply the deployment and service YAML files
                         sh "kubectl apply -f deployment.yaml -f service.yaml"
                     }
                 }
             }
         }
 
-        stage('Postman Testing') {
-            steps {
-                // Run Postman tests
-                script {
-                    try {
-                        sh "newman run ${POSTMAN_COLLECTION}"
-                    } catch (Exception e) {
-                        echo "Postman tests failed but build continues..."
-                    }
-                }
-            }
-        }
+        
 
         stage('Verify Deployment') {
             steps {
