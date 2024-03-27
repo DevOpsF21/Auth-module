@@ -86,7 +86,16 @@ pipeline {
                 }
             }
         }
-
+ stage('Port Forwarding') {
+            steps {
+                script {
+                    // Initiate port-forward in background
+                    sh "kubectl port-forward service/auth-module-service 3000:3000 &"
+                    // Ensure there's a brief pause to establish port forwarding before proceeding
+                    sleep 10
+                }
+            }
+        }
 
         stage('Postman Testing') {
             steps {
