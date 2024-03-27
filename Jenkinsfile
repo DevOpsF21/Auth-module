@@ -13,6 +13,8 @@ pipeline {
         MINIKUBE_PATH = "/opt/homebrew/bin"
         DOCKER_PATH = "/usr/local/bin"
         POSTMAN_COLLECTION = "${WORKSPACE}/Auth collection.postman_collection.json"
+        // Path to Postman collection file in your Git repository
+        POSTMAN_COLLECTION = "Authcollection.postman_collection.json"
     }
 
     stages {
@@ -75,12 +77,12 @@ pipeline {
         }
 
          stage('Postman Testing') {
+        stage('Postman Testing') {
             steps {
                 // Run Postman tests
                 sh "newman run ${POSTMAN_COLLECTION}"
             }
         }
-
         stage('Verify Deployment') {
             steps {
                 script {
