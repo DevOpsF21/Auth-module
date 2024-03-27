@@ -14,6 +14,16 @@ pipeline {
     }
 
     stages {
+        stages {
+        stage('Notify Deployment Start') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == 'main') {
+                        sh "curl -X POST -H 'Content-type: application/json' -d '{\"title\": \"Deployment started\", \"text\": \"Deploying ${env.JOB_NAME} build ${env.BUILD_NUMBER} to Minikube\", \"priority\": \"normal\", \"tags\": [\"environment:minikube\", \"branch:${env.BRANCH_NAME}\"], \"alert_type\": \"info\"}' https://api.datadoghq.com/api/v1/events?api_key=${DATADOG_API_KEY}"
+                    }
+                }
+            }
+        }
         stage('Preparation') {
             steps {
                 script {
