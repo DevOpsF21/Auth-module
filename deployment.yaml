@@ -14,12 +14,7 @@ spec:
     spec:
       containers:
       - name: auth-module
-        # Ensure to use the correct tag as used in your Docker image building process.
-        # For example, if your image tag is "v1.0", specify "auth-module:v1.0".
-        # Using "latest" tag or a specific version tag is recommended for clarity.
-        image: auth-module:v1.0
+        image: auth-module:v1.0.${BUILD_NUMBER}  # Replace ${BUILD_NUMBER} with your actual build number
         ports:
         - containerPort: 3000
-        imagePullPolicy: IfNotPresent
-
 

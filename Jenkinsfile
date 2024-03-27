@@ -1,5 +1,6 @@
 pipeline {
     agent any
+
     environment {
         // Define the Docker image you want to transfer and use, dynamically setting the version tag with each build
         DOCKER_IMAGE = "auth-module"
@@ -9,11 +10,11 @@ pipeline {
         DEPLOYMENT_NAME = "auth-module-deployment"
         // Use the container name from your Kubernetes deployment manifest
         CONTAINER_NAME = "auth-module"
-        // Paths to your Minikube and Docker binaries
+        // Paths to your Minikube and Docker binaries if necessary
         MINIKUBE_PATH = "/opt/homebrew/bin"
         DOCKER_PATH = "/usr/local/bin"
         // Path to Postman collection file in your Git repository
-        POSTMAN_COLLECTION = "${WORKSPACE}/Authcollection.postman_collection.json"
+        POSTMAN_COLLECTION = "Authcollection.postman_collection.json"
     }
 
     stages {
@@ -25,42 +26,53 @@ pipeline {
                 }
             }
         }
+
         stage('Building Docker Image') {
             steps {
                 sh "docker build -t ${IMAGE_FULL_NAME} ."
             }
         }
+
         stage('Run Docker Container Locally') {
             steps {
                 script {
                     // Stop and remove the existing container if running
                     sh "docker stop ${CONTAINER_NAME} || true"
                     sh "docker rm ${CONTAINER_NAME} || true"
+
                     // Run the new container with the updated image on port 3000
                     sh "docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_FULL_NAME}"
                 }
             }
         }
+
         stage('Transfer Image to Minikube') {
             steps {
-                script {
-                    // Save the Docker image to a tar file
-                    sh "docker save ${IMAGE_FULL_NAME} > image.tar"
-                    // Load the image into Minikube's Docker environment
-                    sh "minikube -p minikube image load image.tar"
-                    // Clean up the tar file after loading
-                    sh "rm image.tar"
-                }
+                sh '''
+                    # Save the Docker image to a tar file
+                    docker save ${IMAGE_FULL_NAME} > image.tar
+
+                    # Load the image into Minikube's Docker environment
+                    minikube -p minikube image load image.tar
+
+                    # Clean up the tar file after loading
+                    rm image.tar
+                '''
             }
         }
+
         stage('Deploying to Minikube') {
             steps {
                 script {
                     // Ensure kubectl is using Minikube's Docker environment
                     sh 'eval $(minikube -p minikube docker-env)'
                     
+                    // Replace the placeholder in deployment.yaml with the actual build number
+                    sh "sed -i '' 's/\${BUILD_NUMBER}/${BUILD_NUMBER}/g' deployment.yaml"
+                    
                     // Check if the deployment exists
                     def deploymentExists = sh(script: "kubectl get deployment ${DEPLOYMENT_NAME}", returnStatus: true) == 0
+
                     if (deploymentExists) {
                         // Update the deployment to use the new Docker image
                         sh "kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_FULL_NAME}"
@@ -74,18 +86,21 @@ pipeline {
                 }
             }
         }
+
+
         stage('Postman Testing') {
             steps {
+                // Run Postman tests
                 script {
                     try {
-                        // Assuming npm and newman are already installed and configured
-                        sh "newman run ${POSTMAN_COLLECTION}"
+                        sh 'export PATH=$(npm config get prefix)/bin:$PATH && newman run Authcollection.postman_collection.json'
                     } catch (Exception e) {
                         echo "Postman tests failed but build continues..."
                     }
                 }
             }
         }
+
         stage('Verify Deployment') {
             steps {
                 script {
