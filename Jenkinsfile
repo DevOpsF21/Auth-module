@@ -12,7 +12,7 @@ pipeline {
         // Paths to your Minikube and Docker binaries
         MINIKUBE_PATH = "/opt/homebrew/bin"
         DOCKER_PATH = "/usr/local/bin"
-        // Path to Postman collection file in your Git repository (fixed redundancy)
+        // Path to Postman collection file in your Git repository
         POSTMAN_COLLECTION = "${WORKSPACE}/Authcollection.postman_collection.json"
     }
 
@@ -76,13 +76,15 @@ pipeline {
         }
         stage('Postman Testing') {
             steps {
-                // Run Postman tests
                 script {
                     try {
-                        sh 'export PATH=$(npm config get prefix)/bin:$PATH && newman run RegCollection.postman_collection.json'
+                        // Assuming npm and newman are already installed and configured
+                        sh "newman run ${POSTMAN_COLLECTION}"
                     } catch (Exception e) {
                         echo "Postman tests failed but build continues..."
                     }
+                }
+            }
         }
         stage('Verify Deployment') {
             steps {
