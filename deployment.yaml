@@ -14,7 +14,12 @@ spec:
     spec:
       containers:
       - name: auth-module
-        image: auth-module  # You will set the actual image dynamically via your CI/CD pipeline
+        # Ensure to use the correct tag as used in your Docker image building process.
+        # For example, if your image tag is "v1.0", specify "auth-module:v1.0".
+        # Using "latest" tag or a specific version tag is recommended for clarity.
+        image: auth-module:v1.0
         ports:
         - containerPort: 3000
+        imagePullPolicy: IfNotPresent
+
 
