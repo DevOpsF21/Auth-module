@@ -17,3 +17,4 @@ spec:
         image: auth-module:v1.0.${BUILD_NUMBER}  # Replace ${BUILD_NUMBER} with your actual build number
         ports:
         - containerPort: 3000
+        imagePullPolicy: Always  # Set the image pull policy to Always or your preferred policy
