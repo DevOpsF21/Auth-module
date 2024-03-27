@@ -5,8 +5,7 @@ metadata:
 spec:
   selector:
     app: auth-module
-  type: NodePort
   ports:
-  - protocol: TCP
-    port: 3000
-    targetPort: 3000
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
