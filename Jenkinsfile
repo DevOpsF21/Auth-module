@@ -1,6 +1,5 @@
 pipeline {
     agent any
-
     environment {
         // Define the Docker image you want to transfer and use, dynamically setting the version tag with each build
         DOCKER_IMAGE = "auth-module"
@@ -25,41 +24,34 @@ pipeline {
                 }
             }
         }
-
         stage('Building Docker Image') {
             steps {
                 sh "docker build -t ${IMAGE_FULL_NAME} ."
             }
         }
-
         stage('Run Docker Container Locally') {
             steps {
                 script {
                     // Stop and remove the existing container if running
                     sh "docker stop ${CONTAINER_NAME} || true"
                     sh "docker rm ${CONTAINER_NAME} || true"
-
                     // Run the new container with the updated image on port 3000
                     sh "docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_FULL_NAME}"
                 }
             }
         }
-
         stage('Transfer Image to Minikube') {
             steps {
                 sh '''
                     # Save the Docker image to a tar file
                     docker save ${IMAGE_FULL_NAME} > image.tar
-
                     # Load the image into Minikube's Docker environment
                     minikube -p minikube image load image.tar
-
                     # Clean up the tar file after loading
                     rm image.tar
                 '''
             }
         }
-
         stage('Deploying to Minikube') {
             steps {
                 script {
@@ -68,7 +60,6 @@ pipeline {
                     
                     // Check if the deployment exists
                     def deploymentExists = sh(script: "kubectl get deployment ${DEPLOYMENT_NAME}", returnStatus: true) == 0
-
                     if (deploymentExists) {
                         // Update the deployment to use the new Docker image
                         sh "kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_FULL_NAME}"
@@ -83,7 +74,12 @@ pipeline {
             }
         }
 
-        
+         stage('Postman Testing') {
+            steps {
+                // Run Postman tests
+                sh "newman run ${POSTMAN_COLLECTION}"
+            }
+        }
 
         stage('Verify Deployment') {
             steps {
