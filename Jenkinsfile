@@ -40,22 +40,34 @@ pipeline {
                 }
             }
         }
-
-       /** stage('Enable Ingress Addon') {
+        stage('Testing: find syntax errors using eslint') {
             steps {
                 script {
-                    // Check if Ingress is enabled and enable if not
-                    def ingressEnabled = sh(script: "minikube addons list | grep ingress | grep enabled", returnStdout: true).trim()
-                    if (ingressEnabled == '') {
-                        sh "minikube addons enable ingress"
+                    try {
+                        // Run ESLint to lint your JavaScript code
+                        sh 'npx eslint .'
+                    } catch (err) {
+                        // Handle ESLint errors (e.g., echo error message)
+                        echo "ESLint found errors but pipeline will continue: ${err}"
                     }
                 }
             }
         }
-**/
+
         stage('Building Docker Image') {
             steps {
                 sh "docker build -t ${IMAGE_FULL_NAME} ."
+            }
+        }
+        stage('Testing: Check Docker Image for vulnerability') {
+            steps {
+                snykSecurity(
+                    snykInstallation: 'Snyk_security',
+                    snykTokenId: 'Snyk_api_token',
+                    failOnError: false,
+                    failOnIssues: false,
+                    additionalArguments: "--severity-threshold=high"
+                )
             }
         }
 
@@ -115,6 +127,18 @@ pipeline {
                     // Optionally verify running pods
                     sh "kubectl get pods --selector=app=${CONTAINER_NAME}"
                 }
+            }
+        }
+
+        stage('Testing: Kubernetes Security Scan') {
+            steps {
+                snykSecurity(
+                    snykInstallation: 'Snyk_security',
+                    snykTokenId: 'Snyk_api_token',
+                    failOnError: false,
+                    failOnIssues: false,
+                    additionalArguments: "--all-projects --severity-threshold=high"
+                )
             }
         }
     }
