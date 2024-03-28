@@ -2,27 +2,54 @@ pipeline {
     agent any
 
     environment {
-        // Define the Docker image you want to transfer and use, dynamically setting the version tag with each build
+        // Environment variables
         DOCKER_IMAGE = "auth-module"
-        DOCKER_TAG = "v1.0.${BUILD_NUMBER}" // Dynamically includes Jenkins build number
+        DOCKER_TAG = "v1.0.${BUILD_NUMBER}"
         IMAGE_FULL_NAME = "${DOCKER_IMAGE}:${DOCKER_TAG}"
-        // Use the deployment name from your Kubernetes deployment manifest
         DEPLOYMENT_NAME = "auth-module-deployment"
-        // Use the container name from your Kubernetes deployment manifest
         CONTAINER_NAME = "auth-module"
-        // Paths to your Minikube and Docker binaries if necessary
         MINIKUBE_PATH = "/opt/homebrew/bin"
         DOCKER_PATH = "/usr/local/bin"
-        // Path to Postman collection file in your Git repository
         POSTMAN_COLLECTION = "Authcollection.postman_collection.json"
     }
 
     stages {
+        stage('Notify Deployment Start') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == 'main') {
+                        // Use withCredentials to securely inject the Datadog API key
+                        withCredentials([string(credentialsId: 'datadog-api-key', variable: 'DATADOG_API_KEY')]) {
+                            sh "curl -X POST -H 'Content-type: application/json' " +
+                               "-d '{\"title\": \"Deployment started\", " +
+                               "\"text\": \"Deploying ${env.JOB_NAME} build ${env.BUILD_NUMBER} to Minikube\", " +
+                               "\"priority\": \"normal\", " +
+                               "\"tags\": [\"environment:minikube\", \"branch:${env.BRANCH_NAME}\"], " +
+                               "\"alert_type\": \"info\"}' " +
+                               "https://api.datadoghq.com/api/v1/events?api_key=${DATADOG_API_KEY}"
+                        }
+                    }
+                }
+            }
+        }
         stage('Preparation') {
             steps {
                 script {
-                    // Adjust the PATH to ensure Docker and Minikube commands are accessible
+                    // Set PATH to include Docker and Minikube
                     env.PATH = "${env.DOCKER_PATH}:${env.MINIKUBE_PATH}:${env.PATH}"
+                }
+            }
+        }
+        stage('Testing: find syntax errors using eslint') {
+            steps {
+                script {
+                    try {
+                        // Run ESLint to lint your JavaScript code
+                        sh 'npx eslint .'
+                    } catch (err) {
+                        // Handle ESLint errors (e.g., echo error message)
+                        echo "ESLint found errors but pipeline will continue: ${err}"
+                    }
                 }
             }
         }
@@ -32,17 +59,15 @@ pipeline {
                 sh "docker build -t ${IMAGE_FULL_NAME} ."
             }
         }
-
-        stage('Run Docker Container Locally') {
+        stage('Testing: Check Docker Image for vulnerability') {
             steps {
-                script {
-                    // Stop and remove the existing container if running
-                    sh "docker stop ${CONTAINER_NAME} || true"
-                    sh "docker rm ${CONTAINER_NAME} || true"
-
-                    // Run the new container with the updated image on port 3000
-                    sh "docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_FULL_NAME}"
-                }
+                snykSecurity(
+                    snykInstallation: 'Snyk_security',
+                    snykTokenId: 'Snyk_api_token',
+                    failOnError: false,
+                    failOnIssues: false,
+                    additionalArguments: "--severity-threshold=high"
+                )
             }
         }
 
@@ -51,10 +76,8 @@ pipeline {
                 sh '''
                     # Save the Docker image to a tar file
                     docker save ${IMAGE_FULL_NAME} > image.tar
-
                     # Load the image into Minikube's Docker environment
                     minikube -p minikube image load image.tar
-
                     # Clean up the tar file after loading
                     rm image.tar
                 '''
@@ -64,36 +87,31 @@ pipeline {
         stage('Deploying to Minikube') {
             steps {
                 script {
-                    // Ensure kubectl is using Minikube's Docker environment
+                    // Use Minikube's Docker environment
                     sh 'eval $(minikube -p minikube docker-env)'
-                    
-                    // Replace the placeholder in deployment.yaml with the actual build number
-                    sh "sed -i '' 's/\${BUILD_NUMBER}/${BUILD_NUMBER}/g' deployment.yaml"
-                    
-                    // Check if the deployment exists
-                    def deploymentExists = sh(script: "kubectl get deployment ${DEPLOYMENT_NAME}", returnStatus: true) == 0
-
-                    if (deploymentExists) {
-                        // Update the deployment to use the new Docker image
-                        sh "kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_FULL_NAME}"
-                        
-                        // Restart the pods
-                        sh "kubectl rollout restart deployment/${DEPLOYMENT_NAME}"
-                    } else {
-                        // Apply the deployment and service YAML files
-                        sh "kubectl apply -f deployment.yaml -f service.yaml"
-                    }
+                    // Deploy application
+                    sh "kubectl apply -f deployment.yaml -f service.yaml"
+                    // Update deployment to use the built image
+                    sh "kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE_FULL_NAME}"
                 }
             }
         }
 
+        stage('Apply Ingress Configuration') {
+            steps {
+                script {
+                    // Apply Ingress resource
+                    sh "kubectl apply -f ingress.yaml"
+                }
+            }
+        }
 
         stage('Postman Testing') {
             steps {
-                // Run Postman tests
                 script {
                     try {
-                        sh 'export PATH=$(npm config get prefix)/bin:$PATH && newman run Authcollection.postman_collection.json'
+                        // Run tests via Postman collection
+                        sh "newman run ${POSTMAN_COLLECTION}"
                     } catch (Exception e) {
                         echo "Postman tests failed but build continues..."
                     }
@@ -104,11 +122,23 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 script {
-                    // Check the rollout status to ensure it's successful
+                    // Ensure deployment rollout is successful
                     sh "kubectl rollout status deployment/${DEPLOYMENT_NAME}"
-                    // Optionally, list the running pods to verify the update
+                    // Optionally verify running pods
                     sh "kubectl get pods --selector=app=${CONTAINER_NAME}"
                 }
+            }
+        }
+
+        stage('Testing: Kubernetes Security Scan') {
+            steps {
+                snykSecurity(
+                    snykInstallation: 'Snyk_security',
+                    snykTokenId: 'Snyk_api_token',
+                    failOnError: false,
+                    failOnIssues: false,
+                    additionalArguments: "--all-projects --severity-threshold=high"
+                )
             }
         }
     }

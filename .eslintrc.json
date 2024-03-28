@@ -1,0 +1,13 @@
+{
+    "plugins": ["node"],
+    "extends": ["eslint:recommended", "plugin:node/recommended"],
+    "env": {
+        "node": true,
+        "commonjs": true,
+        "es6": true
+    }
+    ,
+    "rules": {
+        "no-unused-vars": "error"
+    }
+}
