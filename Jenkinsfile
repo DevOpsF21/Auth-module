@@ -13,7 +13,8 @@ pipeline {
         POSTMAN_COLLECTION = "Authcollection.postman_collection.json"
     }
 
-     stage('Notify Deployment Start') {
+    stages {
+        stage('Notify Deployment Start') {
             steps {
                 script {
                     if (env.BRANCH_NAME == 'main') {
