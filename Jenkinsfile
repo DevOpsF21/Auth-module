@@ -41,7 +41,7 @@ pipeline {
             }
         }
 
-        stage('Enable Ingress Addon') {
+       /** stage('Enable Ingress Addon') {
             steps {
                 script {
                     // Check if Ingress is enabled and enable if not
@@ -52,7 +52,7 @@ pipeline {
                 }
             }
         }
-
+**/
         stage('Building Docker Image') {
             steps {
                 sh "docker build -t ${IMAGE_FULL_NAME} ."
@@ -84,7 +84,7 @@ pipeline {
                 }
             }
         }
-
+/
         stage('Apply Ingress Configuration') {
             steps {
                 script {
