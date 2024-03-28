@@ -14,7 +14,6 @@ pipeline {
     }
 
     stages {
-        stages {
         stage('Notify Deployment Start') {
             steps {
                 script {
