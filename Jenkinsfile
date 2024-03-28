@@ -97,6 +97,7 @@ pipeline {
             }
         }
 
+
         stage('Apply Ingress Configuration') {
             steps {
                 script {
