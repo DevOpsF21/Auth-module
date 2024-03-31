@@ -69,12 +69,13 @@ app.post("/v1/user", async (req, res) => {
   }
 });
 
-
 // Endpoint to log in
 app.post("/v1/login", async (req, res) => {
   try {
     const db = getDb();
-    const user = await db.collection("auth").findOne({ username: req.body.username });
+    const user = await db
+      .collection("auth")
+      .findOne({ username: req.body.username });
     if (user == null) {
       return res.status(400).send("Cannot find user");
     }
@@ -91,8 +92,10 @@ app.post("/v1/login", async (req, res) => {
         let redirectTo_ListOfPatients = "http://localhost:8080/v1/allPatients/";
         let redirectTo_Delete = "http://localhost:8080/v1/patientByNumber/";
         let redirectTo_Register_Patient = "http://localhost:8080/v1/patient/";
-        let redirectTo_Search_Number = "http://localhost:8080/v1/patientsByName/";
-        let redirectTo_Search_Name = "http://localhost:8080/v1/patientByNumber/";
+        let redirectTo_Search_Number =
+          "http://localhost:8080/v1/patientsByName/";
+        let redirectTo_Search_Name =
+          "http://localhost:8080/v1/patientByNumber/";
         res.json({
           message:
             "Welcome " + user.username + "!, You are logged in Successfuly ",
@@ -137,7 +140,6 @@ app.post("/v1/login", async (req, res) => {
         let redirectTo_Update_Password = "http://localhost:3000/v1/authChange/";
         let redirectTo_Create_new_User = "http://localhost:3000/v1/user/";
         let redirectTo_Delete_User = "http://localhost:3000/v1/10/";
-
         res.json({
           message:
             "Welcome " + user.username + "!, You are logged in Successfuly ",
@@ -148,20 +150,14 @@ app.post("/v1/login", async (req, res) => {
           redirectTo_Logout,
         });
       }
-      res.json({
-        message: "Login successful",
-        token: token,
-      });
     } else {
       res.status(401).send("Login not allowed");
     }
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).send("An error occurred during login");
+    // res.status(500).send("An error occurred during login");
   }
 });
-
-
 
 // Endpoint to change user password
 app.post("/v1/authChange", verifyToken, async (req, res) => {
@@ -203,27 +199,32 @@ app.post("/v1/authChange", verifyToken, async (req, res) => {
 });
 
 // Endpoint to delete a user by username
-app.delete("/v1/user", verifyToken, verifyRoles(["admin"]), async (req, res) => {
-  const { username } = req.body;
+app.delete(
+  "/v1/user",
+  verifyToken,
+  verifyRoles(["admin"]),
+  async (req, res) => {
+    const { username } = req.body;
 
-  if (!username) {
-    return res.status(400).send("Username is required");
-  }
-
-  try {
-    const db = getDb();
-    const result = await db.collection("auth").deleteOne({ username });
-
-    if (result.deletedCount === 0) {
-      return res.status(404).send("User not found");
+    if (!username) {
+      return res.status(400).send("Username is required");
     }
 
-    res.status(200).send("User deleted successfully");
-  } catch (error) {
-    console.error("Error deleting user:", error);
-    res.status(500).send("An error occurred while deleting the user");
+    try {
+      const db = getDb();
+      const result = await db.collection("auth").deleteOne({ username });
+
+      if (result.deletedCount === 0) {
+        return res.status(404).send("User not found");
+      }
+
+      res.status(200).send("User deleted successfully");
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).send("An error occurred while deleting the user");
+    }
   }
-});
+);
 // Endpoint to log out
 app.post("/v1/logout", async (req, res) => {
   try {
@@ -237,4 +238,3 @@ app.post("/v1/logout", async (req, res) => {
     console.log(error);
   }
 });
-
