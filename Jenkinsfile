@@ -13,6 +13,7 @@ pipeline {
         POSTMAN_COLLECTION = "Authcollection.postman_collection.json"
     }
 
+
     stages {
         stage('Notify Deployment Start') {
             steps {
